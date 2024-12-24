@@ -3,10 +3,11 @@ export interface IUser {
   password: string;
 }
 
+import pool from "../config/database";
+
 export class User implements IUser {
   email: string;
   password: string;
-  private static users: IUser[] = []; // In-memory storage
 
   constructor(email: string, password: string) {
     this.email = email;
@@ -14,12 +15,17 @@ export class User implements IUser {
   }
 
   static async create(userData: IUser): Promise<User> {
-    const user = new User(userData.email, userData.password);
-    this.users.push(user);
-    return user;
+    const { rows } = await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+      [userData.email, userData.password]
+    );
+    return rows[0];
   }
 
   static async findByEmail(email: string): Promise<User | undefined> {
-    return this.users.find((user) => user.email === email);
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    return rows[0];
   }
 }
