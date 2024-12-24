@@ -15,11 +15,4 @@ export class AuthService {
     );
     return rows[0];
   }
-
-  async recordLoginAttempt(email: string, ipAddress: string) {
-    await pool.query(
-      "INSERT INTO login_attempts (email, ip_address) VALUES ($1, $2)",
-      [email, ipAddress]
-    );
-  }
 }

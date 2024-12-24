@@ -53,14 +53,13 @@ export class AuthController {
 
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
-        await authService.recordLoginAttempt(email, req.ip || "");
         return res.status(400).json({ message: "Invalid password" });
       }
 
       const { accessToken, refreshToken } = AuthController.generateTokens(user);
 
       // Store refresh token in database
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await authService.storeRefreshToken(user.id, refreshToken, expiresAt);
 
       // Set cookies
