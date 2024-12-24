@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
+import protectedRoutes from "./routes/protectedRoute";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -14,6 +15,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api", protectedRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
