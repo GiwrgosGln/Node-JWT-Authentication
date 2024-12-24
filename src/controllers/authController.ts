@@ -62,22 +62,27 @@ export class AuthController {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await authService.storeRefreshToken(user.id, refreshToken, expiresAt);
 
-      // Set cookies
+      // Updated cookie settings that will work
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
+        path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
+        path: "/",
         maxAge: 15 * 60 * 1000,
       });
 
-      res.json({ message: "Login successful" });
+      res.json({
+        message: "Login successful",
+        user: { email: user.email },
+      });
     } catch (error) {
       res.status(500).json({ message: "Error logging in" });
     }
