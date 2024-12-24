@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 const corsOptions = {
-  origin: "*",
+  origin: "http://localhost:5173",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -22,7 +22,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
