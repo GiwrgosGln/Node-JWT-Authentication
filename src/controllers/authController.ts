@@ -95,34 +95,38 @@ export class AuthController {
     }
 
     try {
-      // Verify JWT
       const decoded = jwt.verify(
         refreshToken,
         process.env.JWT_REFRESH_SECRET!
       ) as any;
+      const user = await userService.findByEmail(decoded.email);
 
-      // Check if refresh token exists in database
-      const storedToken = await authService.findRefreshToken(refreshToken);
-      if (!storedToken) {
-        return res.status(403).json({ message: "Invalid refresh token" });
-      }
+      // Generate new tokens
+      const { accessToken, refreshToken: newRefreshToken } =
+        AuthController.generateTokens(user);
 
-      // Generate only new access token
-      const accessToken = jwt.sign(
-        { email: decoded.email },
-        process.env.JWT_ACCESS_SECRET!,
-        { expiresIn: "15m" }
-      );
+      // Store new refresh token
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await authService.storeRefreshToken(user.id, newRefreshToken, expiresAt);
 
-      // Set only new access token cookie
+      // Set new cookies
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: false,
+        sameSite: "lax",
+        path: "/",
         maxAge: 15 * 60 * 1000,
       });
 
-      res.json({ message: "Access token refreshed successfully" });
+      res.json({ message: "Tokens refreshed successfully" });
     } catch (error) {
       res.status(403).json({ message: "Invalid refresh token" });
     }
