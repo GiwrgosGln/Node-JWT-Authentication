@@ -1,6 +1,16 @@
-# API Documentation
+# Authentication API
 
 This API provides endpoints for user registration, login, token refreshing, and logout, including JWT-based authentication with access and refresh tokens.
+
+## Tech Stack
+
+- **Node.js**: JavaScript runtime environment
+- **Express**: Web framework for Node.js
+- **PostgreSQL**: Relational database for storing user and token data
+- **JWT (jsonwebtoken)**: For generating and verifying JSON Web Tokens
+- **bcrypt**: For hashing passwords
+- **TypeScript**: For static typing in JavaScript
+- **dotenv**: For managing environment variables
 
 ## Base URL
 
