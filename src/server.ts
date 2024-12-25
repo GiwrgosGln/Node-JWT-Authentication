@@ -3,11 +3,25 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import protectedRoutes from "./routes/protectedRoute";
 import cookieParser from "cookie-parser";
+import pool from "./config/database";
 
 dotenv.config();
 
 const app = express();
 const cors = require("cors");
+
+// Database connection test
+const testDatabaseConnection = async () => {
+  try {
+    const client = await pool.connect();
+    console.log("Successfully connected to PostgreSQL database");
+    client.release();
+    return true;
+  } catch (err) {
+    console.error("Database connection error:", err);
+    return false;
+  }
+};
 
 // Middleware
 app.use(express.json());
@@ -22,16 +36,30 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 
-// Health check route
-app.get("/health", (req, res) => {
-  res.json({ status: "OK" });
+app.get("/health", async (req, res) => {
+  const dbConnected = await testDatabaseConnection();
+  res.json({
+    status: "OK",
+    database: dbConnected ? "Connected" : "Disconnected",
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+// Start server only after testing database connection
+const startServer = async () => {
+  const dbConnected = await testDatabaseConnection();
+  if (dbConnected) {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } else {
+    console.error("Server not started due to database connection failure");
+    process.exit(1);
+  }
+};
+
+startServer();
