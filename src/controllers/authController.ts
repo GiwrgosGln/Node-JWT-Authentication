@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import { UserService } from "../services/userService";
 import { AuthService } from "../services/authService";
+import { PasswordUtils } from "../utils/passwordUtils";
 
 const userService = new UserService();
 const authService = new AuthService();
@@ -33,7 +33,7 @@ export class AuthController {
         return res.status(400).json({ message: "User already exists" });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await PasswordUtils.hashPassword(password);
       await userService.create({ email, password: hashedPassword });
 
       res.status(201).json({ message: "User created successfully" });
@@ -51,18 +51,19 @@ export class AuthController {
         return res.status(400).json({ message: "User not found" });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = await PasswordUtils.verifyPassword(
+        user.password,
+        password
+      );
       if (!validPassword) {
         return res.status(400).json({ message: "Invalid password" });
       }
 
       const { accessToken, refreshToken } = AuthController.generateTokens(user);
 
-      // Store refresh token in database
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await authService.storeRefreshToken(user.id, refreshToken, expiresAt);
 
-      // Updated cookie settings that will work
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -87,6 +88,7 @@ export class AuthController {
       res.status(500).json({ message: "Error logging in" });
     }
   }
+
   static async refresh(req: Request, res: Response) {
     const refreshToken = req.cookies.refreshToken;
 
@@ -100,16 +102,10 @@ export class AuthController {
         process.env.JWT_REFRESH_SECRET!
       ) as any;
       const user = await userService.findByEmail(decoded.email);
-
-      // Generate new tokens
       const { accessToken, refreshToken: newRefreshToken } =
         AuthController.generateTokens(user);
-
-      // Store new refresh token
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await authService.storeRefreshToken(user.id, newRefreshToken, expiresAt);
-
-      // Set new cookies
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
         secure: false,
@@ -131,6 +127,7 @@ export class AuthController {
       res.status(403).json({ message: "Invalid refresh token" });
     }
   }
+
   static async logout(req: Request, res: Response) {
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
