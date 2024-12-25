@@ -8,7 +8,7 @@ This API provides endpoints for user registration, login, token refreshing, and 
 - **Express**: Web framework for Node.js
 - **PostgreSQL**: Relational database for storing user and token data
 - **JWT (jsonwebtoken)**: For generating and verifying JSON Web Tokens
-- **bcrypt**: For hashing passwords
+- **argon2**: For hashing passwords
 - **TypeScript**: For static typing in JavaScript
 - **dotenv**: For managing environment variables
 
