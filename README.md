@@ -63,6 +63,7 @@ If validation fails, the API returns a 400 status code with detailed error messa
 }
 ```
 
+
 ## Endpoints
 
 ### POST /register
