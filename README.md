@@ -8,6 +8,7 @@ This API provides endpoints for user registration, login, token refreshing, and 
 - **Express**: Web framework for Node.js
 - **PostgreSQL**: Relational database for storing user and token data
 - **JWT (jsonwebtoken)**: For generating and verifying JSON Web Tokens
+- **Zod**: Type-safe input validation
 - **argon2**: For hashing passwords
 - **TypeScript**: For static typing in JavaScript
 - **dotenv**: For managing environment variables
@@ -30,6 +31,41 @@ The API supports two token delivery methods simultaneously:
 ## Base URL
 
 - The base URL for all endpoints is assumed to be `http://yourapi.com/api`.
+
+## Input Validation
+
+The API uses Zod for request validation with the following rules:
+
+### Email Validation
+
+- Must be a valid email format (example@domain.com)
+- Minimum 3 characters
+- Maximum 255 characters
+
+### Password Validation
+
+- Minimum 6 characters
+- Maximum 100 characters
+- Must contain at least:
+  - One uppercase letter
+  - One lowercase letter
+  - One number
+
+### Validation Responses
+
+If validation fails, the API returns a 400 status code with detailed error messages:
+
+````json
+{
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "body.email",
+      "message": "Please provide a valid email address"
+    }
+  ]
+}
+
 
 ## Endpoints
 
@@ -137,7 +173,7 @@ Refreshes the access token using the refresh token. Implements token rotation fo
   {
     "refreshToken": "yourRefreshToken"
   }
-  ```
+````
 
 ### POST /logout
 
