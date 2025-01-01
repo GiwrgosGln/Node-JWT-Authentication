@@ -28,10 +28,6 @@ The API supports two token delivery methods simultaneously:
    - Flexibility for mobile token management
    - Manual token handling in requests
 
-## Base URL
-
-- The base URL for all endpoints is assumed to be `http://yourapi.com/api`.
-
 ## Input Validation
 
 The API uses Zod for request validation with the following rules:
@@ -60,11 +56,12 @@ If validation fails, the API returns a 400 status code with detailed error messa
   "message": "Validation failed",
   "errors": [
     {
-      "field": "body.email",
-      "message": "Please provide a valid email address"
+      "field": "body.password",
+      "message": "Password must contain at least 6 characters, one uppercase letter, one lowercase letter, one number"
     }
   ]
 }
+
 
 
 ## Endpoints
