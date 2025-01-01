@@ -10,7 +10,14 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction
 ) => {
-  const accessToken = req.cookies.accessToken;
+  // Check cookie first for web apps
+  const cookieToken = req.cookies.accessToken;
+
+  // Check Authorization header for mobile apps
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.split(" ")[1];
+
+  const accessToken = cookieToken || bearerToken;
 
   if (!accessToken) {
     return res.status(401).json({ message: "Access token required" });

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { UserService } from "../services/userService";
 import { AuthService } from "../services/authService";
 import { PasswordUtils } from "../utils/passwordUtils";
@@ -80,35 +80,51 @@ export class AuthController {
         maxAge: 15 * 60 * 1000,
       });
 
-      res.json({
-        message: "Login successful",
-        user: { email: user.email },
+      return res.status(200).json({
+        accessToken,
+        refreshToken,
+        expiresIn: 900,
+        refreshExpiresIn: 604800,
       });
     } catch (error) {
-      res.status(500).json({ message: "Error logging in" });
+      return res.status(500).json({ message: "Error logging in" });
     }
   }
 
   static async refresh(req: Request, res: Response) {
-    const refreshToken = req.cookies.refreshToken;
+    const cookieToken = req.cookies.refreshToken;
+    const bodyToken = req.body.refreshToken;
+    const refreshToken = cookieToken || bodyToken;
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token required" });
     }
 
     try {
+      const storedToken = await authService.findRefreshToken(refreshToken);
+      if (!storedToken) {
+        return res
+          .status(401)
+          .json({ message: "Invalid or expired refresh token" });
+      }
+
+      await authService.invalidateRefreshToken(refreshToken);
+
       const decoded = jwt.verify(
         refreshToken,
         process.env.JWT_REFRESH_SECRET!
-      ) as any;
+      ) as JwtPayload;
       const user = await userService.findByEmail(decoded.email);
+
       const { accessToken, refreshToken: newRefreshToken } =
         AuthController.generateTokens(user);
+
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await authService.storeRefreshToken(user.id, newRefreshToken, expiresAt);
+
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -116,21 +132,37 @@ export class AuthController {
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
         maxAge: 15 * 60 * 1000,
       });
 
-      res.json({ message: "Tokens refreshed successfully" });
+      return res.status(200).json({
+        accessToken,
+        refreshToken: newRefreshToken,
+        expiresIn: 900,
+        refreshExpiresIn: 604800,
+      });
     } catch (error) {
-      res.status(403).json({ message: "Invalid refresh token" });
+      return res.status(401).json({ message: "Invalid refresh token" });
     }
   }
 
   static async logout(req: Request, res: Response) {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-    res.json({ message: "Logged out successfully" });
+    try {
+      const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+      if (refreshToken) {
+        await authService.invalidateRefreshToken(refreshToken);
+      }
+
+      res.clearCookie("refreshToken");
+      res.clearCookie("accessToken");
+
+      return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: "Error logging out" });
+    }
   }
 }

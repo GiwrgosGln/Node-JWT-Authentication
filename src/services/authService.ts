@@ -15,4 +15,16 @@ export class AuthService {
     );
     return rows[0];
   }
+
+  async invalidateRefreshToken(token: string) {
+    await pool.query("DELETE FROM refresh_tokens WHERE token = $1", [token]);
+  }
+
+  async invalidateAllUserRefreshTokens(userId: number) {
+    await pool.query("DELETE FROM refresh_tokens WHERE user_id = $1", [userId]);
+  }
+
+  async cleanExpiredTokens() {
+    await pool.query("DELETE FROM refresh_tokens WHERE expires_at <= NOW()");
+  }
 }
