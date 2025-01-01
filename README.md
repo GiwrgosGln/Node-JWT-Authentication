@@ -195,7 +195,3 @@ Logs out the user by invalidating the refresh token.
       "message": "Logged out successfully"
     }
     ```
-
-```
-
-```
