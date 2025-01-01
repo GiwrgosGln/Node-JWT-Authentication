@@ -51,7 +51,7 @@ The API uses Zod for request validation with the following rules:
 
 If validation fails, the API returns a 400 status code with detailed error messages:
 
-````json
+```json
 {
   "message": "Validation failed",
   "errors": [
@@ -61,8 +61,7 @@ If validation fails, the API returns a 400 status code with detailed error messa
     }
   ]
 }
-
-
+```
 
 ## Endpoints
 
@@ -170,7 +169,7 @@ Refreshes the access token using the refresh token. Implements token rotation fo
   {
     "refreshToken": "yourRefreshToken"
   }
-````
+  ```
 
 ### POST /logout
 
