@@ -1,6 +1,6 @@
 # Authentication API
 
-This API provides endpoints for user registration, login, token refreshing, and logout, including JWT-based authentication with access and refresh tokens.
+This API provides endpoints for user registration, login, token refreshing, and logout, including JWT-based authentication with access and refresh tokens. The API supports both web applications (using HTTP-only cookies) and mobile applications (using response body tokens).
 
 ## Tech Stack
 
@@ -11,6 +11,21 @@ This API provides endpoints for user registration, login, token refreshing, and 
 - **argon2**: For hashing passwords
 - **TypeScript**: For static typing in JavaScript
 - **dotenv**: For managing environment variables
+
+## Token Delivery Methods
+
+The API supports two token delivery methods simultaneously:
+
+1. **HTTP-only Cookies** (Web Applications):
+
+   - Secure token storage in browser
+   - Protection against XSS attacks
+   - Automatic token handling
+
+2. **Response Body** (Mobile Applications):
+   - Direct token access for native storage
+   - Flexibility for mobile token management
+   - Manual token handling in requests
 
 ## Base URL
 
@@ -77,12 +92,16 @@ Logs in a user with the provided email and password, generating access and refre
 #### Response
 
 - **Success (200)**:
-  - **Cookies**:
-    - `refreshToken`: A secure, HTTP-only cookie containing the refresh token.
-  - **Body**:
+  - **Cookies** (Web Clients):
+    - `refreshToken`: HTTP-only cookie containing refresh token
+    - `accessToken`: HTTP-only cookie containing access token
+  - **Body** (Mobile Clients):
     ```json
     {
-      "accessToken": "yourAccessToken"
+      "accessToken": "yourAccessToken",
+      "refreshToken": "yourRefreshToken",
+      "expiresIn": 900,
+      "refreshExpiresIn": 604800
     }
     ```
 - **Error (400)**:
@@ -98,19 +117,12 @@ Logs in a user with the provided email and password, generating access and refre
       "message": "Invalid password"
     }
     ```
-- **Error (500)**:
-  - **Body**:
-    ```json
-    {
-      "message": "Error logging in"
-    }
-    ```
 
 ### POST /refresh
 
 #### Description
 
-Refreshes the access token using the refresh token.
+Refreshes the access token using the refresh token. Implements token rotation for security.
 
 #### Request
 
@@ -118,25 +130,14 @@ Refreshes the access token using the refresh token.
 - **Method**: `POST`
 - **Headers**:
   - `Content-Type: application/json`
-- **Cookies**:
-  - `refreshToken`: The refresh token stored as an HTTP-only cookie.
-
-#### Response
-
-- **Success (200)**:
-  - **Body**:
-    ```json
-    {
-      "accessToken": "newAccessToken"
-    }
-    ```
-- **Error (401)**:
-  - **Body**:
-    ```json
-    {
-      "message": "Invalid or expired refresh token"
-    }
-    ```
+- **Cookies** (Web Clients):
+  - `refreshToken`: The refresh token stored as HTTP-only cookie
+- **Body** (Mobile Clients):
+  ```json
+  {
+    "refreshToken": "yourRefreshToken"
+  }
+  ```
 
 ### POST /logout
 
@@ -162,14 +163,3 @@ Logs out the user by invalidating the refresh token.
       "message": "Logged out successfully"
     }
     ```
-
-## Notes
-
-- The `register` endpoint creates a new user and stores their hashed password in the database.
-- The `login` endpoint generates JWT access and refresh tokens upon successful authentication. The refresh token is stored in the database and sent as a cookie to the client.
-- The `refresh` endpoint issues a new access token if the provided refresh token is valid.
-- The `logout` endpoint invalidates the refresh token, effectively logging out the user.
-- Ensure that the environment variables `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` are set for token generation.
-- The `refreshToken` cookie is configured to be secure and HTTP-only, which helps protect it from being accessed by JavaScript in the browser.
-
-This documentation assumes the existence of a service layer (`userService` and `authService`) that handles database interactions. Adjust the base URL and endpoint paths as necessary for your specific application setup.
