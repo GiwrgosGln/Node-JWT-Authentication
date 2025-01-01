@@ -1,21 +1,28 @@
-import express, { Response } from "express";
+import express from "express";
 import { AuthController } from "../controllers/authController";
-import { AuthRequest } from "../types/auth";
+import { validateRequest } from "../middleware/validateRequest";
+import { loginSchema, registerSchema } from "../validators/authValidators";
 import { authLimiter } from "../middleware/rateLimiter";
 
 const router = express.Router();
 
-router.post("/register", AuthController.register as express.RequestHandler);
+router.post("/register", validateRequest(registerSchema), (req, res, next) => {
+  AuthController.register(req, res).catch(next);
+});
+
 router.post(
   "/login",
   authLimiter,
-  AuthController.login as express.RequestHandler
+  validateRequest(loginSchema),
+  (req, res, next) => {
+    AuthController.login(req, res).catch(next);
+  }
 );
-router.post("/refresh", AuthController.refresh as express.RequestHandler);
-router.post("/logout", AuthController.logout);
-
-const authHandler = (req: AuthRequest, res: Response) => {
-  const user = req.user;
-};
+router.post("/refresh", (req, res, next) => {
+  AuthController.refresh(req, res).catch(next);
+});
+router.post("/logout", (req, res, next) => {
+  AuthController.logout(req, res).catch(next);
+});
 
 export default router;
