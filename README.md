@@ -63,7 +63,6 @@ If validation fails, the API returns a 400 status code with detailed error messa
 }
 ```
 
-
 ## Endpoints
 
 ### POST /register
@@ -172,8 +171,6 @@ Refreshes the access token using the refresh token. Implements token rotation fo
   }
   ```
 
-````
-
 ### POST /logout
 
 #### Description
@@ -198,4 +195,7 @@ Logs out the user by invalidating the refresh token.
       "message": "Logged out successfully"
     }
     ```
-````
+
+```
+
+```
